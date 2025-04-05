@@ -42,8 +42,8 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
               count = medal_counts[(medal_counts['Medal_NOC'] == medal_NOC)]['Percentage'].sum()
               medal_values[medal] = count
 
-            # if count > 0:
-            if True: 
+            # if count > 0: 
+            if True:
                 source_indices.append(all_labels.index(country))
                 target_indices.append(all_labels.index(medal_NOC))
                 values.append(count)
@@ -88,7 +88,6 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
 
     # Generate x and y for the nodes based on the same order of source and target indices
     if is_relative == False:
-      # y_values = [0, 0, 0, 0, 0.05, 0.20, 0.35, 0.5, 0.6, 0.75, 0.9, 1.10, 1.15, 1.30, 1.45, 1.8, 2, 2.15, 2.3, 2.5]
       y_values = [0, 0, 0, 0, 0.05, 0.20, 0.35, 0.5, 0.6, 0.75, 0.9, 1.10, 1.15, 1.30, 1.45, 1.8, 2, 2.15, 2.3, 2.5]
       x_values = [0, 1, 2, 3, 0.35, 0.35, 0.35, 0.35, 0.351, 0.351, 0.351, 0.351, 0.352, 0.352, 0.352, 0.352, 0.353, 0.353, 0.353, 0.353]
     else:
@@ -97,9 +96,9 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
 
     link_colors = []
     for idx,color in enumerate(node_colors[len(countries):]):
-      # if values[idx] != 0:
-      rgb = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
-      link_colors.append(f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.7)")
+       # if values[idx] != 0:
+       rgb = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
+       link_colors.append(f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.7)")
     
     # Sankey Diagram
     fig = go.Figure(go.Sankey(

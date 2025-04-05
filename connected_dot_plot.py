@@ -1,5 +1,6 @@
 import plotly.graph_objects as go
 import plotly.express as px
+import sport as sp
 
 def connected_dot_plot(event_counts, discipline):
     both_genders = event_counts[(event_counts["Men's"] > 0) & (event_counts["Women's"] > 0)]
@@ -49,3 +50,49 @@ def connected_dot_plot(event_counts, discipline):
     )
 
     return fig5
+
+def connected_dot_plot_8(age_stats, age_stats_long, discipline):
+    
+    filtered_sports = [sport_.value for sport_ in sp.Sport]
+    
+    age_stats = age_stats[age_stats['Sport'].isin(filtered_sports)].sort_values(by='Sport', ascending=False)
+    age_stats_long = age_stats_long[age_stats_long['Sport'].isin(filtered_sports)].sort_values(by='Sport', ascending=False)
+    
+    fig = px.scatter(
+        age_stats_long,
+        x='Age (Years)',
+        y='Sport',
+        color='Age',
+        symbol='Age',
+        title=f'Career Length ({discipline} vs Other disciplines)',
+        color_discrete_map={'Age_min': 'blue', 'Age_max': 'green'}
+    )
+
+    for sport in age_stats['Sport']:
+    # for sport in [sport_.value for sport_ in sp.Sport]:
+        subset = age_stats[age_stats['Sport'] == sport]
+        if not subset.empty:
+            min_val = subset['Age_min'].values[0]
+            max_val = subset['Age_max'].values[0]
+            line_color = 'red' if sport.strip().lower() == discipline.strip().lower() else 'gray'
+
+            fig.add_trace(go.Scatter(
+                x=[min_val, max_val],
+                y=[sport, sport],
+                mode='lines',
+                line=dict(color=line_color, dash='dot'),
+                showlegend=False
+            ))
+
+    fig.update_layout(
+        xaxis_title='Age (Years)',
+        yaxis_title='Sport',
+        template='simple_white',
+        width=1800,
+        height=1000,
+        yaxis=dict(
+            tickmode='array',
+        )
+    )    
+   
+    return fig

@@ -178,3 +178,91 @@ def dot_plot_preprocess(olympics_data, discipline):
     event_counts = df.pivot_table(index='Clean_Event', columns='Gender', aggfunc='size', fill_value=0).reset_index()
     
     return event_counts
+
+def preprocess_data(data, sport):
+    athletics_data = data[data["Sport"] == sport]
+    gender_counts = athletics_data.groupby(["Year", "Gender"]).size().reset_index(name="Count")
+
+    pivot_df = gender_counts.pivot(index="Year", columns="Gender", values="Count").fillna(0)
+    pivot_df["Total"] = pivot_df.sum(axis=1)
+    pivot_df["Female %"] = (pivot_df["Female"] / pivot_df["Total"]) * 100
+    pivot_df["Male %"] = (pivot_df["Male"] / pivot_df["Total"]) * 100
+
+    pivot_df = pivot_df.reset_index()
+    pivot_df["Year"] = pivot_df["Year"].astype(str)
+    
+    return pivot_df
+
+def preprocess_bar_chart_data(olympics_data, sport):
+    '''
+        Computes data to display in the 
+
+        args:
+            olympics_data: The dataframe 
+            sport: The selected discipline
+        returns:
+            Data for the Visualisation 7 bar chart
+    '''
+    df = olympics_data[olympics_data["Sport"] == sport].sort_values(["Name", "Year"])
+
+    df["Participation_Number"] = df.groupby("Name").cumcount() + 1 
+    df["Medal_Status"] = df["Medal"].apply(lambda x: "Medal Won" if pd.notna(x) else "No Medal")
+    df["Medal"] = df["Medal"].fillna("No Medal")
+
+    participation_counts = df.groupby(["Participation_Number", "Medal_Status"]).size().unstack(fill_value=0)
+    participation_counts = participation_counts.reset_index()
+    participation_counts_detailed = df.groupby(["Sport", "Participation_Number", "Medal"]).size().unstack(fill_value=0)
+    participation_counts_detailed = participation_counts_detailed[["Gold", "Silver", "Bronze", "No Medal"]].reset_index()
+    
+    # sport_selected_medals = participation_counts_detailed[participation_counts_detailed['Sport'] == sport]
+    sport_selected_medals = participation_counts_detailed
+
+    sport_selected_medals['Gold_Percentage'] = (sport_selected_medals['Gold'] / (sport_selected_medals['Gold'] + sport_selected_medals['Silver'] + sport_selected_medals['Bronze'] + sport_selected_medals['No Medal'])) * 100
+    sport_selected_medals['Silver_Percentage'] = (sport_selected_medals['Silver'] / (sport_selected_medals['Gold'] + sport_selected_medals['Silver'] + sport_selected_medals['Bronze'] + sport_selected_medals['No Medal'])) * 100
+    sport_selected_medals['Bronze_Percentage'] = (sport_selected_medals['Bronze'] / (sport_selected_medals['Gold'] + sport_selected_medals['Silver'] + sport_selected_medals['Bronze'] + sport_selected_medals['No Medal'])) * 100
+    
+    df = sport_selected_medals[sport_selected_medals['Participation_Number'] <= 4] 
+    
+    return df
+
+def preprocess_connected_dot_plot_data(olympics_data, sport):
+    df = olympics_data
+    
+    df['Career Length'] = df.groupby('Name')['Year'].transform('nunique')
+
+    # avg_career_length = df.groupby('Sport')['Career Length'].mean().reset_index()
+
+    # avg_career_length = avg_career_length.sort_values('Career Length', ascending=False)
+
+    # avg_career_length['Color'] = avg_career_length['Sport'].apply(lambda x: 'red' if x == 'Swimming' else 'gray')
+
+    # min_career_length = df.groupby('Sport')['Career Length'].min().reset_index()
+
+    # max_career_length = df.groupby('Sport')['Career Length'].max().reset_index()
+    
+    min_age = df.groupby('Sport')['Age'].min().reset_index()
+    max_age = df.groupby('Sport')['Age'].max().reset_index()
+
+    age_stats = pd.merge(min_age, max_age, on='Sport', suffixes=('_min', '_max'))
+
+    age_stats['Color'] = age_stats['Sport'].apply(lambda x: 'red' if x == sport else 'gray')
+
+
+    age_stats_long = pd.melt(
+        age_stats,
+        id_vars=['Sport', 'Color'],
+        value_vars=['Age_min', 'Age_max'],
+        var_name='Age',
+        value_name='Age (Years)'
+    )
+    return age_stats, age_stats_long   
+
+def preprocess_stacked_bar_chart(olympics_data, sport):
+    
+    df = olympics_data[olympics_data["Sport"] == sport]
+    
+    df["Medal"] = df["Medal"].fillna("No Medal")
+
+    medal_counts = df[df["Medal"] != "No Medal"].groupby(["Name", "Medal"]).size().reset_index(name="Count")
+    
+    return medal_counts
