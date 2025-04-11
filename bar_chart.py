@@ -61,7 +61,7 @@ def visualize_data(data, sport):
             )
 
     layout = go.Layout(
-        title="Podium of Gold, Silver, and Bronze Winning Chances per Participation (Swimming)",
+        # title="Podium of Gold, Silver, and Bronze Winning Chances per Participation (Swimming)",
         xaxis=dict(
             title="Participation Number",
             tickvals=data['Participation_Number'],

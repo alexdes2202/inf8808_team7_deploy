@@ -11,13 +11,28 @@ AGE_MIDPOINTS = {"10-14": 12, "15-17": 16, "18-20": 19, "21-23": 22,
                     "24-26": 25, "27-30": 28, "31-35": 33, "36+": 40}
 
 def convert_age(df):
-   
+    '''
+        Converts the 'Age' column to integer type
+
+        args:
+            df: The dataframe
+        returns:
+            The dataframe with 'Age' converted to integer
+    '''
     df['Age'] = df['Age'].astype('Int64')
     
     return df
 
 def normalize_events(df):
-    
+    '''
+        Standardizes event names by removing redundant or repetitive sport names 
+        and converting terms
+        
+        args:
+            df: The dataframe
+        returns:
+            The dataframe with standardized 'Event' names
+    '''
     df['Event'] = df.apply(
         lambda row: re.sub(f'^{re.escape(row["Sport"])}\\s*', '',
                         re.sub(r'\s*metres$', 'm',
@@ -28,9 +43,33 @@ def normalize_events(df):
     return df
 
 def normalize_countries(olympics_df, regions_df):
-    
+    '''
+        Adds the country name ('Region') to the Olympics dataframe using the NOC mapping.
+
+        args:
+            olympics_df: Dataframe with Olympic data
+            regions_df: Dataframe mapping 'NOC' codes to country names in a 'Region' column
+        returns:
+            The olympics dataframe with a new 'Region' column
+    '''
     olympics_df['Region'] = olympics_df['NOC'].map(regions_df.set_index('NOC')['Region'])
     return olympics_df
+
+
+def get_noc_from_country(region_name, regions_df):
+    '''
+        Returns the NOC code corresponding to a given country name.
+
+        args:
+            region_name: The country name
+            regions_df: The dataframe containing 'Region' and 'NOC' mappings
+        returns:
+            The matching NOC code, or None if not found
+    '''
+    if region_name == "None":
+        return "None"
+    row = regions_df[regions_df["Region"] == region_name]
+    return row["NOC"].values[0] if not row.empty else "None"
 
 
 def add_age_group(df):
@@ -127,7 +166,7 @@ def preprocess_sankey_data(olympics_data, year, sport, country, top_k=3):
     df_medals['Medal_NOC'] = df_medals['Medal'] + '_' + df_medals['NOC']
 
     # Count the number of medals for each country, for each type of medals
-    medal_counts = df_medals.groupby(['NOC', 'Medal_NOC']).size().reset_index(name='Count')
+    medal_counts = df_medals.groupby(['NOC', 'Region', 'Medal_NOC']).size().reset_index(name='Count')
 
     total_counts_per_country = df_medals.groupby('NOC').size()  # Total participations per country
     print(total_counts_per_country)
@@ -167,6 +206,15 @@ def group_by_medal_and_age_group(df):
 
 
 def dot_plot_preprocess(olympics_data, discipline):
+    '''
+        Prepares event data for the dot plot showing gender disparities.
+
+        args:
+            olympics_data: Olympics dataframe
+            discipline: The selected sport discipline
+        returns:
+            A dataframe counting events per gender
+    '''
     sport_events = olympics_data[olympics_data["Sport"] == discipline]["Event"]
     df = pd.DataFrame(sport_events, columns=['Event'])
 
@@ -179,7 +227,16 @@ def dot_plot_preprocess(olympics_data, discipline):
     
     return event_counts
 
-def preprocess_data(data, sport):
+def preprocess_gender_by_year(data, sport):
+    '''
+        Process gender participation data over the years for a stacked bar chart.
+
+        args:
+            data: Olympics dataframe
+            sport: The selected sport discipline
+        returns:
+            A pivoted dataframe with male/female participation percentages per year
+    '''
     athletics_data = data[data["Sport"] == sport]
     gender_counts = athletics_data.groupby(["Year", "Gender"]).size().reset_index(name="Count")
 
@@ -226,6 +283,18 @@ def preprocess_bar_chart_data(olympics_data, sport):
     return df
 
 def preprocess_connected_dot_plot_data(olympics_data, sport):
+    '''
+        Prepares min and max age data for each sport
+
+        args:
+            olympics_data: Olympics dataframe
+            sport: The selected sport to highlight in the visualization
+
+        returns:
+            age_stats: Dataframe with min/max ages and colors for each sport
+            age_stats_long: Melted version for plotting
+    '''
+
     df = olympics_data
     
     df['Career Length'] = df.groupby('Name')['Year'].transform('nunique')
@@ -257,8 +326,19 @@ def preprocess_connected_dot_plot_data(olympics_data, sport):
     )
     return age_stats, age_stats_long   
 
+
 def preprocess_stacked_bar_chart(olympics_data, sport):
-    
+    '''
+        Returns the count of medals per athlete for a given sport
+
+        args:
+            olympics_data: Olympics dataframe
+            sport: The selected sport to filter on
+
+        returns:
+            medal_counts: Dataframe with number of medals per athlete by medal type
+    '''
+
     df = olympics_data[olympics_data["Sport"] == sport]
     
     df["Medal"] = df["Medal"].fillna("No Medal")

@@ -38,7 +38,7 @@ def visualize_data(data, sport):
         x="Year",
         y=["Female %", "Male %"],
         labels={"value": "Percentage of Athletes", "Year": "Olympic Year"},
-        title=f"Evolution of Male and Female Participation in {sport}",
+        # title=f"Evolution of Male and Female Participation in {sport}",
         color_discrete_map={"Female %": "pink", "Male %": "blue"}
     )
 
@@ -75,7 +75,7 @@ def stacked_bar_chart_9(medal_counts):
         y="Name",
         color="Medal",
         orientation="h",
-        title="Olympic Hall of Fame",
+        # title="Olympic Hall of Fame",
         labels={"Count": "Total Medals", "Name": "Athletes"},
         color_discrete_map=medal_colors,
         category_orders={"Name": ordered_athletes}
