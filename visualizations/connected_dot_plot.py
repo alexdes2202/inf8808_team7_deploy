@@ -54,8 +54,6 @@ def connected_dot_plot(event_counts):
             text="Gender",
             font=dict(size=14)
         ),
-        plot_bgcolor="#f0f0f0",
-        paper_bgcolor="white",
         font=dict(size=14),
         xaxis=dict(
             tickfont=dict(size=13)

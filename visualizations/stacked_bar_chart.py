@@ -40,7 +40,6 @@ def visualize_data(data):
             title="Percentage of Participation",
             tickfont=dict(size=14)          
         ),
-        plot_bgcolor="#f0f0f0",
     )
 
     # Add a horizontal line at 50% participation
