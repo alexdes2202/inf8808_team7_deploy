@@ -1,23 +1,37 @@
-from preprocess import preprocess_sankey_data
+from preprocess.preprocess import preprocess_sankey_data
 import plotly.graph_objects as go
 
-from theme import GOLD, SILVER, BRONZE, NO_MEDAL
-import hover_template
+from style.theme import GOLD, SILVER, BRONZE, NO_MEDAL
+import style.hover_template as hover_template
 
-# Function to create the Sankey plot for a given year or for all editions
 def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative = False):
+    '''
+    Creates a Sankey plot to visualize the distribution of medals (Gold, Silver, Bronze, No Medal) 
+    for a selected country and the top 3 countries in a selected sport
 
+    args:
+        olympics_data: The global dataframe
+        year: The edition
+        sport: The selected sport
+        selected_country: The selected country
+        is_relative: If True, percentages instead of counts
+
+    returns:
+        fig: The generated Sankey plot figure
+        is_country_data_available: Boolean indicating whether the selected country's data is available
+    '''
+
+    # Preprocess data to get medal counts for the specified year, sport, and country
     df_medals, medal_counts = preprocess_sankey_data(olympics_data, year, sport, selected_country)
     
     if df_medals is None:
       return None, None
 
-    # List of nodes for Sankey
+    # Get the list of countries and their corresponding names
     countries = medal_counts['NOC'].unique().tolist()
     countries_names = medal_counts['Region'].unique().tolist()
-    # print(countries_names)
 
-    # Add the nodes "Medal" and "No Medal" for each country
+    # Add the nodes for medals ("Gold", "Silver", "Bronze", "No Medal") for each country
     all_labels = countries + [f'{medal}_{country}' for country in countries for medal in ['Gold', 'Silver', 'Bronze', 'No Medal']]
 
     # Indices mapping
@@ -48,6 +62,7 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
             target_indices.append(all_labels.index(medal_NOC))
             values.append(count)
 
+        # Calculate the 'No Medal' count or percentage for the country
         if is_relative == False:
           no_medal_count = len(df_medals[df_medals['NOC'] == country]) - medal_count
         else:
@@ -58,6 +73,7 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
         target_indices.append(all_labels.index(no_medal_NOC))
         values.append(no_medal_count)
 
+    # Define colors for each medal type
     medal_colors = {
         'Gold': GOLD, 
         'Silver': SILVER,
@@ -65,13 +81,13 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
         'No Medal': NO_MEDAL
     }
 
-    # Add countries' colors
+    # Assign 'black' for countries and 'red' to the selected country
     node_colors = ['black'] * len(countries)
     for idx, label in enumerate(countries):
       if label == selected_country:
           node_colors[idx] = 'red'
 
-    # Add medals' colors
+    # Assign colors for medal nodes based on medal type
     for label in all_labels:
         if 'Gold' in label:
             node_colors.append(medal_colors['Gold'])
@@ -82,13 +98,14 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
         elif 'No Medal' in label:
             node_colors.append(medal_colors['No Medal'])
 
+    # Assign link colors based on medal types
     link_colors = []
     for idx,color in enumerate(node_colors[len(countries):]):
        # Reference : https://www.30secondsofcode.org/python/s/hex-to-rgb/
        rgb = tuple(int(color.lstrip('#')[i:i+2], 16) for i in (0, 2, 4))
        link_colors.append(f"rgba({rgb[0]}, {rgb[1]}, {rgb[2]}, 0.7)")
     
-    # Sankey Diagram
+    # Create the Sankey plot
     fig = go.Figure(go.Sankey(
         orientation = 'v',
         arrangement = "snap",
@@ -96,7 +113,6 @@ def create_sankey_plot(olympics_data, year, sport, selected_country, is_relative
             pad=15,
             thickness=20,
             line=dict(color='black', width=0.5),
-            # label=countries,
             label = countries_names,
             color=node_colors,
             customdata=countries + [country for country in countries for _ in range(4)],

@@ -1,14 +1,9 @@
-'''
-    Contains the functions to set up the scatter plot visualization.
-'''
-
 import plotly.graph_objects as go
 import plotly.express as px
-from plotly.subplots import make_subplots
-import hover_template as hover
+import style.hover_template as hover
 import pandas as pd
 
-from preprocess import AGE_MIDPOINTS, AGE_BINS, AGE_LABELS
+from preprocess.preprocess import AGE_MIDPOINTS, AGE_BINS, AGE_LABELS
 
 def add_age_distribution_trace(fig, grouped, size_column, mode="Absolute", show_avg=False):
     '''
@@ -88,8 +83,10 @@ def format_age_yaxes(fig, show_avg=False):
             The updated figure with formatted y-axes
     '''
     if show_avg:
+        # Update the primary y-axis to show age groups
         fig.update_yaxes(title_text="Age Group (Midpoint)", secondary_y=False,
                          tickvals=list(AGE_MIDPOINTS.values()), ticktext=list(AGE_MIDPOINTS.keys()))
+        # Add a secondary y-axis to display the average age
         fig.update_yaxes(title_text="Average Age", secondary_y=True,
                          tickvals=list(AGE_MIDPOINTS.values()), ticktext=list(AGE_MIDPOINTS.keys()))
     else:
@@ -112,9 +109,11 @@ def create_age_distribution_bubble(data, grouped, size_column, show_avg=False, m
     Returns:
         A Plotly figure showing the age distribution and average age if enabled
     '''
+    # If no grouped data, return an empty figure with a message
     if grouped.empty:
         return go.Figure().update_layout(title="No data available for the selected filters.")
     
+    # Create the scatter plot for age distribution and use size and color for the bubbles
     fig = px.scatter(
         grouped,
         x="Year",
@@ -126,12 +125,14 @@ def create_age_distribution_bubble(data, grouped, size_column, show_avg=False, m
         size_max=40
     )
     
+    # Update the y-axis to show the age groups
     fig.update_yaxes(
         tickvals=list(AGE_MIDPOINTS.values()),
         ticktext=list(AGE_MIDPOINTS.keys()),
         title="Age Group (Midpoint)"
     )
 
+    # Add a line for the average age
     if show_avg:
         avg_age = data.groupby("Year")["Age"].mean().reset_index(name="Average Age")
         fig.add_trace(
@@ -147,7 +148,6 @@ def create_age_distribution_bubble(data, grouped, size_column, show_avg=False, m
     return fig
 
 
-
 def create_event_age_scatter(grouped_event, size_col):
     '''
     Creates a scatter plot of age distribution across events (Visualization 2).
@@ -159,6 +159,7 @@ def create_event_age_scatter(grouped_event, size_col):
     Returns:
         go.Figure: A Plotly Express scatter figure for age distribution across events.
     '''
+    # Create the scatter plot for age distribution and use size and color for the bubbles
     fig = px.scatter(grouped_event,
                      x="Year",
                      y="Age_Midpoint",
@@ -169,6 +170,7 @@ def create_event_age_scatter(grouped_event, size_col):
                      opacity=0.85,
                      size_max=40)
 
+    # Update the y-axis to show the age groups
     fig.update_yaxes(tickvals=list(AGE_MIDPOINTS.values()), ticktext=list(AGE_MIDPOINTS.keys()),
                      title="Age Group (Midpoint)")
     return fig

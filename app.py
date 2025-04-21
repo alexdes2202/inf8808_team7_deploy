@@ -1,18 +1,15 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
 
-import preprocess
-import sport
-import scatter_charts
-import sankey_diagrams
-import bubble_chart
-import connected_dot_plot
-import stacked_bar_chart
-import bar_chart
-from preprocess import AGE_MIDPOINTS, AGE_LABELS, AGE_BINS
+import preprocess.preprocess as preprocess
+import preprocess.sport as sport
+import visualizations.scatter_charts as scatter_charts
+import visualizations.sankey_diagrams as sankey_diagrams
+import visualizations.bubble_chart as bubble_chart
+import visualizations.connected_dot_plot as connected_dot_plot
+import visualizations.stacked_bar_chart as stacked_bar_chart
+import visualizations.bar_chart as bar_chart
+from preprocess.preprocess import AGE_MIDPOINTS
 
 @st.cache_data
 def prep_data():
@@ -51,9 +48,6 @@ def main():
     # ---------------------------
     # Data Filtering
     # ---------------------------
-    # if discipline != "None" and user_country != "None":
-    #     filtered_data = olympics_data[(olympics_data["Sport"] == discipline) & 
-    #                                   (olympics_data["NOC"] == user_country)]
     if discipline != "None":
         filtered_discipline_data = olympics_data[olympics_data["Sport"] == discipline]
     if user_country != "None":
@@ -74,12 +68,13 @@ def main():
         st.subheader(f"Age group distribution and average age of athletes in {discipline}:")
     else:
         st.subheader("Age group distribution and average age of athletes in my discipline :")
-        
+     
+    # If a discipline is selected, filter the data and show the visualization   
     if discipline != "None":
-        # Interactive controls: absolute vs relative and option to overlay average age
+        # Allow the user to select the mode (absolute vs relative)
         mode = st.radio("Select mode for bubble size", ("Absolute", "Relative"), key="mode_age_distribution")
+        # Allow the user to show the average age line
         show_avg = st.checkbox("Show Average Age", key="show_avg_age")
-
         # Prepare data for visualization 1
         data_plot = preprocess.add_age_group(filtered_discipline_data)
         if data_plot.empty:
@@ -102,8 +97,10 @@ def main():
         st.subheader(f"Age evolution of athletes across subcategories in {discipline} :")
     else:
         st.subheader("Age evolution of athletes across subcategories in my discipline :")
-        
+    
+    # If a discipline is selected, filter the data and show the visualization 
     if discipline != "None":
+        # Allow user to select a sub-category
         events = filtered_discipline_data["Event"].unique().tolist()
         event_selected = st.selectbox("Select a sub-category (Event)", ["All"] + events, key="event_select")
         
@@ -132,6 +129,7 @@ def main():
     else:
         st.subheader("Optimal age range for winning a medal in my discipline :")
     
+    # If a discipline is selected, filter the data and show the visualization
     if discipline != "None":
         medal_by_age_distribution = preprocess.group_by_medal_and_age_group(olympics_data[olympics_data["Sport"] == discipline])
         if medal_by_age_distribution.empty:
@@ -150,15 +148,17 @@ def main():
         st.subheader(f"Historical performance of {user_country_name} in {discipline} vs. key reference countries :")
     else:
         st.subheader("Historical performance of my country vs. key reference countries :")
-        
+    
+    # If a country and a discipline are selected, filter the data and show the visualization  
     if user_country != "None" and discipline != "None":
+        # Allow the user to select the edition and the mode
         participation_year = st.selectbox("Select a year", ["All Editions"] + sorted([year for year in olympics_data["Year"].unique() if year >= 1999], reverse=True))
         performance_mode_event = st.radio("Select a mode", ("Absolute", "Relative"), key="performance_mode_event")
         if performance_mode_event == "Absolute":
             is_relative = False
         else:
             is_relative = True
-        # Add a legend
+        # Add the medal's legend
         st.markdown("""
         **Medal Type**<br>
         <span style="display:inline-block;width:20px;height:20px;border-radius:50%;background-color:gold;border:1px solid black;"></span> Gold<br>
@@ -184,14 +184,15 @@ def main():
         st.subheader(f"Disparities between men and women in {discipline} :")
     else :
         st.subheader("Disparities between men and women in my discipline :")
-
+    
+    # If a discipline is selected, filter the data and show the visualization
     if discipline != "None":
             event_counts = preprocess.dot_plot_preprocess(olympics_data, discipline)
 
             if "Men's" not in event_counts.columns or "Women's" not in event_counts.columns:
                 st.error("There is no available data for selected discipline.")
             else:
-                fig5 = connected_dot_plot.connected_dot_plot(event_counts, discipline)
+                fig5 = connected_dot_plot.connected_dot_plot(event_counts)
                 st.plotly_chart(fig5, use_container_width=True, key="fig5")
     else:
         st.info("Please select a discipline to view gender disparities.")
@@ -206,10 +207,10 @@ def main():
     else :
         st.subheader("Evolution of gender participation in my discipline :")
 
+    # If a discipline is selected, filter the data and show the visualization
     if discipline != "None":
-
         processed_data = preprocess.preprocess_gender_by_year(olympics_data, discipline)    
-        fig6 = stacked_bar_chart.visualize_data(processed_data, discipline)
+        fig6 = stacked_bar_chart.visualize_data(processed_data)
         st.plotly_chart(fig6, key="fig6")
 
     else:
@@ -219,16 +220,15 @@ def main():
     # Visualization 7
     # Q11: Combien de participations un athlète dans ma discipline a-t-il généralement avant de remporter une médaille ?
     # ===========================
-    # Visualization: Number of Medals Over Time
-    
     if discipline != "None":
         st.subheader(f"Odds of winning a medal in {discipline} based on number of Olympic participations :")
     else :
         st.subheader("Odds of winning a medal in my discipline based on number of Olympic participations :")
     
+    # If a discipline is selected, filter the data and show the visualization
     if discipline != "None":
         data = preprocess.preprocess_bar_chart_data(olympics_data, discipline)    
-        fig7 = bar_chart.visualize_data(data, discipline)
+        fig7 = bar_chart.visualize_data(data)
         st.plotly_chart(fig7, key="fig7")
 
     else:
@@ -240,11 +240,11 @@ def main():
     # ===========================
     st.subheader("Career participation span across sports :")
     
+    # If a discipline is selected, filter the data and show the visualization
     if discipline != "None":
         age_stats, age_stats_long = preprocess.preprocess_connected_dot_plot_data(olympics_data, discipline)    
         fig8 = connected_dot_plot.connected_dot_plot_8(age_stats, age_stats_long, discipline)
         st.plotly_chart(fig8, key="fig8")
-
     else:
         st.info("Please select a discipline to view participation span.")
         
@@ -254,11 +254,11 @@ def main():
     # ===========================  
     st.subheader("Olympic Hall of Fame :")
     
+    # If a discipline is selected, filter the data and show the visualization
     if discipline != "None":
         medal_counts = preprocess.preprocess_stacked_bar_chart(olympics_data, discipline)    
         fig9 = stacked_bar_chart.stacked_bar_chart_9(medal_counts)
         st.plotly_chart(fig9, key="fig9")
-
     else:
         st.info("Please select a discipline to view the top athletes.")
 

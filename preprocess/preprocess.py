@@ -83,8 +83,13 @@ def add_age_group(df):
     '''
     df = df.copy()
     df = df.dropna(subset=["Age"])
+    
+    # Categorize ages into defined bins with labels
     df["Age Group"] = pd.cut(df["Age"], bins=AGE_BINS, labels=AGE_LABELS, right=False)
+    
+    # Map each age group to its corresponding midpoint
     df["Age_Midpoint"] = df["Age Group"].map(AGE_MIDPOINTS)
+    
     return df
 
 
@@ -121,7 +126,9 @@ def compute_relative_size_column(df, mode, value_col="Count", group_col="Year"):
             The updated dataframe and the name of the column to use for bubble size
     '''
     if mode == "Relative":
+        # Calculate total value per group
         total_per_group = df.groupby(group_col)[value_col].transform("sum")
+        # Compute percentage contribution within each group
         df["Percentage"] = ((df[value_col] / total_per_group) * 100).round(2)
         return df, "Percentage"
     else:
@@ -173,8 +180,6 @@ def preprocess_sankey_data(olympics_data, year, sport, country, top_k=3):
     if total_counts_per_country.empty:
         return None, None
     
-    # print(year)
-    # print(medal_counts.apply(lambda row: (row['Count'] / total_counts_per_country[row['NOC']]) * 100, axis=1))
     medal_counts['Percentage'] = medal_counts.apply(lambda row: (row['Count'] / total_counts_per_country[row['NOC']]) * 100, axis=1)  # Normalize to percentage
 
     # Sort countries
@@ -218,11 +223,11 @@ def dot_plot_preprocess(olympics_data, discipline):
     sport_events = olympics_data[olympics_data["Sport"] == discipline]["Event"]
     df = pd.DataFrame(sport_events, columns=['Event'])
 
-    # Cleaning and categorizing the data
+    # Clean and categorize the data
     df['Clean_Event'] = df['Event'].str.replace(r"Men's |Women's |Mixed ", '', regex=True)
     df['Gender'] = df['Event'].str.extract(r"(Men's|Women's)")
 
-    # Creating a pivot table to count events by gender
+    # Create a pivot table to count events by gender
     event_counts = df.pivot_table(index='Clean_Event', columns='Gender', aggfunc='size', fill_value=0).reset_index()
     
     return event_counts
@@ -238,10 +243,13 @@ def preprocess_gender_by_year(data, sport):
             A pivoted dataframe with male/female participation percentages per year
     '''
     athletics_data = data[data["Sport"] == sport]
+    # Count number of entries by Year and Gender
     gender_counts = athletics_data.groupby(["Year", "Gender"]).size().reset_index(name="Count")
 
     pivot_df = gender_counts.pivot(index="Year", columns="Gender", values="Count").fillna(0)
+    # Calculate total participants per year
     pivot_df["Total"] = pivot_df.sum(axis=1)
+    # Compute percentage of female and male participants
     pivot_df["Female %"] = (pivot_df["Female"] / pivot_df["Total"]) * 100
     pivot_df["Male %"] = (pivot_df["Male"] / pivot_df["Total"]) * 100
 
@@ -262,18 +270,20 @@ def preprocess_bar_chart_data(olympics_data, sport):
     '''
     df = olympics_data[olympics_data["Sport"] == sport].sort_values(["Name", "Year"])
 
+    # Count number of participations per athlete
     df["Participation_Number"] = df.groupby("Name").cumcount() + 1 
     df["Medal_Status"] = df["Medal"].apply(lambda x: "Medal Won" if pd.notna(x) else "No Medal")
     df["Medal"] = df["Medal"].fillna("No Medal")
 
+    # Aggregate counts by number of participations and medal status
     participation_counts = df.groupby(["Participation_Number", "Medal_Status"]).size().unstack(fill_value=0)
     participation_counts = participation_counts.reset_index()
     participation_counts_detailed = df.groupby(["Sport", "Participation_Number", "Medal"]).size().unstack(fill_value=0)
     participation_counts_detailed = participation_counts_detailed[["Gold", "Silver", "Bronze", "No Medal"]].reset_index()
     
-    # sport_selected_medals = participation_counts_detailed[participation_counts_detailed['Sport'] == sport]
     sport_selected_medals = participation_counts_detailed
 
+    # Calculate percentage of each medal type
     sport_selected_medals['Gold_Percentage'] = (sport_selected_medals['Gold'] / (sport_selected_medals['Gold'] + sport_selected_medals['Silver'] + sport_selected_medals['Bronze'] + sport_selected_medals['No Medal'])) * 100
     sport_selected_medals['Silver_Percentage'] = (sport_selected_medals['Silver'] / (sport_selected_medals['Gold'] + sport_selected_medals['Silver'] + sport_selected_medals['Bronze'] + sport_selected_medals['No Medal'])) * 100
     sport_selected_medals['Bronze_Percentage'] = (sport_selected_medals['Bronze'] / (sport_selected_medals['Gold'] + sport_selected_medals['Silver'] + sport_selected_medals['Bronze'] + sport_selected_medals['No Medal'])) * 100
@@ -298,25 +308,16 @@ def preprocess_connected_dot_plot_data(olympics_data, sport):
     df = olympics_data
     
     df['Career Length'] = df.groupby('Name')['Year'].transform('nunique')
-
-    # avg_career_length = df.groupby('Sport')['Career Length'].mean().reset_index()
-
-    # avg_career_length = avg_career_length.sort_values('Career Length', ascending=False)
-
-    # avg_career_length['Color'] = avg_career_length['Sport'].apply(lambda x: 'red' if x == 'Swimming' else 'gray')
-
-    # min_career_length = df.groupby('Sport')['Career Length'].min().reset_index()
-
-    # max_career_length = df.groupby('Sport')['Career Length'].max().reset_index()
     
+    # Get minimum and maximum age per sport
     min_age = df.groupby('Sport')['Age'].min().reset_index()
     max_age = df.groupby('Sport')['Age'].max().reset_index()
-
     age_stats = pd.merge(min_age, max_age, on='Sport', suffixes=('_min', '_max'))
 
+    # Highlight the selected sport in red, others in gray
     age_stats['Color'] = age_stats['Sport'].apply(lambda x: 'red' if x == sport else 'gray')
 
-
+    # Reshape the data for plotting
     age_stats_long = pd.melt(
         age_stats,
         id_vars=['Sport', 'Color'],
