@@ -120,9 +120,25 @@ def create_age_distribution_bubble(data, grouped, size_column, show_avg=False, m
         y="Age_Midpoint",
         size=size_column,
         color="Age Group",
-        labels={"Year": "Year", "Age Group": "Age Group", size_column: "Count" if mode == "Absolute" else "Percentage"},
+        custom_data=["Age_Midpoint", "Age Group"],
+        labels={
+                "Year": "Year",
+                "Age_Midpoint": "Age Group Midpoint",
+                "Age Group": "Age Group",
+                size_column: "Count" if mode == "Absolute" else "Percentage"
+            },
         opacity=0.85,
         size_max=40
+    )
+
+    fig.update_traces(
+        hovertemplate=(
+            "Year: %{x}<br>" +
+            "Age Group Midpoint: %{customdata[0]}<br>" +
+            f"{'Count' if mode == 'Absolute' else 'Percentage'}: " +
+            ("%{marker.size:.0f}" if mode == "Absolute" else "%{marker.size:.1f}") + "<br>" +
+            "Age Group: %{customdata[1]}<extra></extra>"
+        )
     )
     
     # Update the y-axis to show the age groups
@@ -165,12 +181,23 @@ def create_event_age_scatter(grouped_event, size_col):
                      y="Age_Midpoint",
                      size=size_col,
                      color="Age Group",
-                     labels={"Year": "Year", "Age Group": "Age Group", 
+                     custom_data=["Age_Midpoint", "Age Group"],
+                     labels={"Year": "Year", "Age Group": "Age Group", "Age_Midpoint": "Age Group Midpoint",
                              size_col: "Percentage" if size_col == "Percentage" else "Count"},
                      opacity=0.85,
                      size_max=40)
 
-    # Update the y-axis to show the age groups
     fig.update_yaxes(tickvals=list(AGE_MIDPOINTS.values()), ticktext=list(AGE_MIDPOINTS.keys()),
                      title="Age Group (Midpoint)")
+    
+    fig.update_traces(
+        hovertemplate=(
+            "Year: %{x}<br>" +
+            "Age Group Midpoint: %{customdata[0]}<br>" +
+            f"{'Count' if size_col == 'Count' else 'Percentage'}: " +
+            ("%{marker.size:.0f}" if size_col == "Count" else "%{marker.size:.1f}") + "<br>" +
+            "Age Group: %{customdata[1]}<extra></extra>"
+        )
+    )
+
     return fig

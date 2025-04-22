@@ -1,0 +1,7 @@
+/project8808
+/.vscode
+/venv
+/__pycache__
+/preprocess/__pycache__
+/style/__pycache__
+/visualizations/__pycache__

@@ -44,7 +44,7 @@ def visualize_data(data):
     )
 
     # Add a horizontal line at 50% participation
-    fig.add_hline(y=50, line_dash="dash", annotation_text="50%",
+    fig.add_hline(y=50, line_dash="dash", line_color="black", annotation_text="50%",
                   annotation_position="right", annotation_font_size=14, annotation_font_color="black")
 
     fig.update_xaxes(tickangle=-90)

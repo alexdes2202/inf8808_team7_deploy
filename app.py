@@ -50,13 +50,11 @@ def main():
     # ---------------------------
     if discipline != "None":
         filtered_discipline_data = olympics_data[olympics_data["Sport"] == discipline]
-    if user_country != "None":
-        filtered_country_data = olympics_data[olympics_data["NOC"] == user_country]
 
     # Header
     st.title("Welcome to our Olympics Data Exploration and Visualization App")
     st.write(f"You have selected athletes from "
-             f"{user_country if user_country != 'None' else 'all countries'} in "
+             f"{user_country_name if user_country_name != 'None' else 'all countries'} in "
              f"{discipline if discipline != 'None' else 'all disciplines'}.")
 
     # ===========================
